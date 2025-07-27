@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>環境・エネルギー暗記アプリ</title>
+<style>
+:root{
+  --c1:#0d6efd;--c2:#198754;--c3:#f8f9fa;--c4:#eaeaea;--c5:#333;
+  font-family:"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
+}
+body{margin:0;background:var(--c3);color:var(--c5);display:flex;justify-content:center;min-height:100vh}
+#app{max-width:800px;width:95%;margin:auto;padding:20px}
+h1{text-align:center;margin:10px 0 20px}
+select{padding:6px 10px;margin-bottom:15px;font-size:1rem}
+.card,.quiz{background:#fff;border-radius:8px;box-shadow:0 3px 8px rgba(0,0,0,.15);padding:25px;min-height:180px}
+#question{font-size:1.2rem;font-weight:600;margin-bottom:18px}
+#answer{margin-bottom:18px;white-space:pre-wrap}
+.btn{padding:8px 18px;margin:5px;border:none;border-radius:4px;font-size:1rem;cursor:pointer}
+.btn-main{background:var(--c1);color:#fff}
+.btn-ghost{background:var(--c4)}
+.hidden{display:none}
+.choice{display:block;margin:8px 0;padding:10px;border:1px solid var(--c4);border-radius:4px;cursor:pointer}
+.choice.correct{background:var(--c2);color:#fff;border-color:var(--c2)}
+.choice.wrong{background:#dc3545;color:#fff;border-color:#dc3545}
+@media (prefers-color-scheme:dark){
+  body{background:#222;color:#eee}
+  #app .card,#app .quiz{background:#2f2f2f;color:#eee}
+  .btn-main{background:#579dff}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>🌏 環境・エネルギー暗記アプリ</h1>
+
+  <label>モード：</label>
+  <select id="mode">
+    <option value="flash">フラッシュカード</option>
+    <option value="quiz">４択クイズ</option>
+  </select>
+
+  <!-- Flashcard -->
+  <div id="flash" class="card">
+      <div id="question"></div>
+      <div id="answer" class="hidden"></div>
+      <button id="show" class="btn btn-ghost">答えを表示</button>
+      <button id="next" class="btn btn-main">次へ</button>
+  </div>
+
+  <!-- Quiz -->
+  <div id="quiz" class="quiz hidden">
+     <div id="qText"></div>
+     <div id="choices"></div>
+     <button id="nextQuiz" class="btn btn-main hidden">次へ</button>
+  </div>
+</div>
+
+<script>
+// ---------- 暗記事項データ ----------
+const items = [
+ {q:"エコロジカル・フットプリントとは？",
+  a:"人間活動が環境に与える負荷を『資源の再生産＋廃棄物浄化に必要な面積』で表した指標。地球の環境容量を可視化する。"},
+ {q:"アースオーバーシュートデー（日本人水準）",
+  a:"世界中の人が日本人と同じ生活をすると、1月〜5月の間で地球資源 1 年分を使い切る。半減以上の努力が必要。"},
+ {q:"ヒートアイランド現象とは？",
+  a:"都市部の気温が周辺郊外より高くなる現象。土地利用の変化・人工排熱・建築物形状などが要因。"},
+ {q:"ヒートアイランド｜土地利用の対策", 
+  a:"アスファルト・コンクリート→緑化、水面・水田のように保水性の高い面へ。都市計画レベルの大規模緑化が有効。"},
+ {q:"ヒートアイランド｜建築物の対策",
+  a:"外壁・屋上の保水化／蓄熱低減、建物配置で通風路を確保。"},
+ {q:"ヒートアイランド｜人工排熱の対策",
+  a:"建物設備・空調の省エネ、高効率OA機器、コージェネや河川水等の排熱利用。"},
+ {q:"IPCC の役割", 
+  a:"各国の研究論文・観測を総合し、気候変動の現状・影響・対策を科学的に評価し報告書を発行する。"},
+ {q:"IPCC 第6次報告書のポイント",
+  a:"・人為的気候変動を断言\n・平均+1.1 °C 上昇（産業革命前比）\n・1.5 °C超で不可逆的損失が多発"},
+ {q:"GWP（地球温暖化係数）とは？",
+  a:"CO₂=1 を基準に、他温室効果ガスが温暖化へ及ぼす影響を相対値で示す指標。"},
+ {q:"大気中 CO₂ 濃度の特徴", 
+  a:"世界的に増加率は上昇。発生源が多い北半球中・高緯度で高く、南半球で低い。"},
+ {q:"パリ協定の主目標", 
+  a:"世界平均気温上昇を産業革命前比 2 °C 未満、努力目標 1.5 °C 未満。各国は 5 年ごとに目標を更新。"},
+ {q:"日本の2030年削減目標（パリ協定当初）", a:"2013年比 26 %（業務40 %、家庭39 % など）"},
+ {q:"COP26 での日本目標（2021）", a:"2013年比 46 %（業務51 %、家庭66 %）"},
+ {q:"ESG 投資とは？", 
+  a:"環境・社会・ガバナンスの非財務情報も考慮する投資アプローチ。化石燃料座礁資産リスクを回避し長期リターンを狙う。"},
+ {q:"PRI（責任投資原則）", a:"投資家が意思決定で ESG を考慮することを推奨する国際的行動原則。"},
+ {q:"パッシブクーリング（PC）の要素 3 つ", a:"① 熱を逃がす（通風）\n② 熱を遮る（遮蔽）\n③ 自然の冷熱を得る"},
+ {q:"パッシブヒーティング（PH）の要素 3 つ", a:"① 断熱・気密で熱を逃がさない\n② 太陽熱などを取り込む（ダイレクトゲイン）\n③ 自然の温熱を得る"},
+ {q:"バッドギア & バッドギール とは？", 
+  a:"自然換気設備。\nバッドギア＝パキスタンの通風用煙突窓\nバッドギール＝イランの採風塔"},
+ {q:"省エネ『底上げ』と『天井上げ』", 
+  a:"底上げ=最低限義務（建築物省エネ法）／天井上げ=トップランナー（ZEB・ZEH）"},
+ {q:"PAL の定義", 
+  a:"Perimeter Annual Load：ペリメータゾーン年間熱負荷 ÷ 床面積［MJ/(m²·年)］。建築(パッシブ)側指数。"},
+ {q:"CEC の定義", 
+  a:"Co-efficient of Energy Consumption：年間一次エネ消費 ÷ 仮想空調負荷。設備(アクティブ)側指数。"},
+ {q:"ZEB の国別定義差① 再エネ範囲", a:"オンサイト限定か？→ 日本はオンサイトのみ。欧州などはオフサイトも可。"},
+ {q:"ZEB の国別定義差② OA・コンセント負荷", a:"日本は含めない。米国は含める。"},
+ {q:"ZEB 普及上の課題（日本）", 
+  a:"自社ビル中心でビジネス化途上／設計性能のみで実績評価せず／テナントビルでは光熱費負担がオーナーでない等"}
+];
+
+// ---------- 共通ユーティリティ ----------
+const shuffle = arr => [...arr].sort(()=>Math.random()-0.5);
+
+// ---------- フラッシュカード ----------
+let flashIdx = 0;
+const qEl = document.getElementById("question");
+const aEl = document.getElementById("answer");
+function renderFlash(){
+  const item = items[flashIdx];
+  qEl.textContent = item.q;
+  aEl.textContent = item.a;
+  aEl.classList.add("hidden");
+}
+document.getElementById("show").onclick = ()=>aEl.classList.toggle("hidden");
+document.getElementById("next").onclick = ()=>{
+  flashIdx = (flashIdx+1)%items.length;
+  renderFlash();
+};
+
+// ---------- ４択クイズ ----------
+let quizSet = shuffle(items);
+let quizIdx = 0;
+const qText = document.getElementById("qText");
+const choiceArea = document.getElementById("choices");
+const nextQuizBtn = document.getElementById("nextQuiz");
+
+function renderQuiz(){
+  nextQuizBtn.classList.add("hidden");
+  choiceArea.innerHTML = "";
+  const correct = quizSet[quizIdx];
+  qText.textContent = "Q. " + correct.q;
+  // 選択肢作成
+  const choices = shuffle([correct, ...shuffle(items).slice(0,3)]).map(it=>it.a);
+  choices.forEach(txt=>{
+    const div = document.createElement("div");
+    div.className="choice";
+    div.textContent = txt;
+    div.onclick = ()=>{
+      document.querySelectorAll(".choice").forEach(c=>c.onclick=null); // disable
+      if(txt===correct.a){
+        div.classList.add("correct");
+      }else{
+        div.classList.add("wrong");
+        // 正解もハイライト
+        [...choiceArea.children].find(c=>c.textContent===correct.a).classList.add("correct");
+      }
+      nextQuizBtn.classList.remove("hidden");
+    };
+    choiceArea.appendChild(div);
+  });
+}
+nextQuizBtn.onclick = ()=>{
+  quizIdx = (quizIdx+1)%quizSet.length;
+  if(quizIdx===0) quizSet = shuffle(items); // 1周したら再シャッフル
+  renderQuiz();
+};
+
+// ---------- モード切替 ----------
+const flashDiv = document.getElementById("flash");
+const quizDiv = document.getElementById("quiz");
+document.getElementById("mode").onchange = e=>{
+  const v = e.target.value;
+  if(v==="flash"){
+    flashDiv.classList.remove("hidden");
+    quizDiv.classList.add("hidden");
+    renderFlash();
+  }else{
+    flashDiv.classList.add("hidden");
+    quizDiv.classList.remove("hidden");
+    renderQuiz();
+  }
+};
+// 初期表示
+renderFlash();
+</script>
+</body>
+</html>
