@@ -150,6 +150,11 @@
             border-left: 4px solid #f39c12;
             margin: 10px 0;
         }
+        @media (max-width: 600px) {
+            .controls { flex-direction: column; }
+            button { width: 100%; margin-bottom: 10px; }
+            .card-container { padding: 20px; min-height: 300px; }
+        }
     </style>
 </head>
 <body>
@@ -173,7 +178,7 @@
         <div class="category" id="category"></div>
         <div class="question" id="question"></div>
         <div class="answer" id="answer"></div>
-        <div class="hint">クリックして答えを表示</div>
+        <div class="hint">タップで答え表示 / スワイプで移動</div>
     </div>
     
     <div class="progress" id="progress"></div>
@@ -196,7 +201,7 @@
                 answer: `<div class="important">都市部の気温がその周辺の郊外部より高くなる現象</div>
                 <strong>主な原因：</strong>
                 <ul>
-                    <li><strong>土地利用の変化</strong>：アスファルトやコンクリートは水分が少なく大気の加熱源となる</li>
+                    <li><strong>土地利用の変化</strong>：水田や森林は水を多く含み蒸発潜熱で気温上昇を抑えるが、アスファルトやコンクリートは水分が少なく大気の加熱源となる</li>
                     <li><strong>建築物の影響</strong>：昼間の蓄熱が夜間に放熱、風の道がなくなる</li>
                     <li><strong>人工排熱の影響</strong>：工場、建物空調、自動車からの排熱</li>
                 </ul>`
@@ -216,6 +221,7 @@
                 <strong>人工排熱関連：</strong>
                 <ul>
                     <li>建築物や空調・熱源設備の省エネ</li>
+                    <li>OA機器等の高効率化</li>
                     <li>河川水・海水・地下水・地中熱の利用</li>
                     <li>コジェネレーション等による排熱利用</li>
                 </ul>`
@@ -231,6 +237,7 @@
                 <ul>
                     <li>人為由来の気候変動が明確に起こっていると断言</li>
                     <li>産業革命前と比べて1.1度地球の平均気温が上昇</li>
+                    <li>極端気象の増加や生態系・農業への打撃が進行中</li>
                     <li>1.5度以内に収めないと不可逆的損失が多発</li>
                 </ul>`
             },
@@ -407,7 +414,7 @@
 
         function updateHint() {
             const hint = document.querySelector('.hint');
-            hint.textContent = showingAnswer ? 'クリックして質問に戻る' : 'クリックして答えを表示';
+            hint.textContent = showingAnswer ? 'タップで質問に戻る / スワイプで移動' : 'タップで答え表示 / スワイプで移動';
         }
 
         function nextCard() {
@@ -461,6 +468,27 @@
                 updateStats();
             }
         }
+                let touchStartX = 0;
+                let touchEndX = 0;
+                const swipeThreshold = 50;
+                const cardContainer = document.querySelector(".card-container");
+                cardContainer.addEventListener("touchstart", e => {
+                    touchStartX = e.changedTouches[0].screenX;
+                });
+                cardContainer.addEventListener("touchend", e => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                });
+                function handleSwipe() {
+                    const diff = touchEndX - touchStartX;
+                    if (Math.abs(diff) > swipeThreshold) {
+                        if (diff < 0) {
+                            nextCard();
+                        } else {
+                            previousCard();
+                        }
+                    }
+                }
 
         // 初期化
         init();
