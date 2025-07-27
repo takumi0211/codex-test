@@ -178,7 +178,7 @@
         <div class="category" id="category"></div>
         <div class="question" id="question"></div>
         <div class="answer" id="answer"></div>
-        <div class="hint">タップで答え表示 / スワイプで移動</div>
+        <div class="hint">タップで答え表示 / フリックで移動</div>
     </div>
     
     <div class="progress" id="progress"></div>
@@ -414,7 +414,7 @@
 
         function updateHint() {
             const hint = document.querySelector('.hint');
-            hint.textContent = showingAnswer ? 'タップで質問に戻る / スワイプで移動' : 'タップで答え表示 / スワイプで移動';
+            hint.textContent = showingAnswer ? 'タップで質問に戻る / フリックで移動' : 'タップで答え表示 / フリックで移動';
         }
 
         function nextCard() {
@@ -460,7 +460,6 @@
                 learnedCards = new Set(JSON.parse(saved));
             }
         }
-
         function resetProgress() {
             if (confirm('学習進捗をリセットしますか？')) {
                 learnedCards.clear();
@@ -468,27 +467,29 @@
                 updateStats();
             }
         }
-                let touchStartX = 0;
-                let touchEndX = 0;
-                const swipeThreshold = 50;
-                const cardContainer = document.querySelector(".card-container");
-                cardContainer.addEventListener("touchstart", e => {
-                    touchStartX = e.changedTouches[0].screenX;
-                });
-                cardContainer.addEventListener("touchend", e => {
-                    touchEndX = e.changedTouches[0].screenX;
-                    handleSwipe();
-                });
-                function handleSwipe() {
-                    const diff = touchEndX - touchStartX;
-                    if (Math.abs(diff) > swipeThreshold) {
-                        if (diff < 0) {
-                            nextCard();
-                        } else {
-                            previousCard();
-                        }
-                    }
+        // スワイプ操作
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const swipeThreshold = 40; // px
+        const cardContainer = document.querySelector('.card-container');
+
+        cardContainer.addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        cardContainer.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > swipeThreshold) {
+                e.preventDefault();
+                if (dx < 0) {
+                    nextCard();
+                } else {
+                    previousCard();
                 }
+            }
+        });
 
         // 初期化
         init();
