@@ -1,181 +1,469 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>環境・エネルギー暗記アプリ</title>
-<style>
-:root{
-  --c1:#0d6efd;--c2:#198754;--c3:#f8f9fa;--c4:#eaeaea;--c5:#333;
-  font-family:"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
-}
-body{margin:0;background:var(--c3);color:var(--c5);display:flex;justify-content:center;min-height:100vh}
-#app{max-width:800px;width:95%;margin:auto;padding:20px}
-h1{text-align:center;margin:10px 0 20px}
-select{padding:6px 10px;margin-bottom:15px;font-size:1rem}
-.card,.quiz{background:#fff;border-radius:8px;box-shadow:0 3px 8px rgba(0,0,0,.15);padding:25px;min-height:180px}
-#question{font-size:1.2rem;font-weight:600;margin-bottom:18px}
-#answer{margin-bottom:18px;white-space:pre-wrap}
-.btn{padding:8px 18px;margin:5px;border:none;border-radius:4px;font-size:1rem;cursor:pointer}
-.btn-main{background:var(--c1);color:#fff}
-.btn-ghost{background:var(--c4)}
-.hidden{display:none}
-.choice{display:block;margin:8px 0;padding:10px;border:1px solid var(--c4);border-radius:4px;cursor:pointer}
-.choice.correct{background:var(--c2);color:#fff;border-color:var(--c2)}
-.choice.wrong{background:#dc3545;color:#fff;border-color:#dc3545}
-@media (prefers-color-scheme:dark){
-  body{background:#222;color:#eee}
-  #app .card,#app .quiz{background:#2f2f2f;color:#eee}
-  .btn-main{background:#579dff}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>環境・建築用語 暗記カード</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .primary-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .primary-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .secondary-btn {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .success-btn {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .success-btn:hover {
+            background-color: #229954;
+        }
+        
+        .card-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            min-height: 400px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .card-container:hover {
+            transform: translateY(-2px);
+        }
+        
+        .question {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .answer {
+            font-size: 18px;
+            color: #34495e;
+            display: none;
+        }
+        
+        .answer.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .answer ul {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        
+        .answer li {
+            margin: 8px 0;
+        }
+        
+        .progress {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #7f8c8d;
+        }
+        
+        .category {
+            display: inline-block;
+            background-color: #e74c3c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .hint {
+            text-align: center;
+            color: #95a5a6;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        
+        .stats {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .important {
+            background-color: #fffacd;
+            padding: 5px 10px;
+            border-left: 4px solid #f39c12;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-<div id="app">
-  <h1>🌏 環境・エネルギー暗記アプリ</h1>
+    <h1>🌍 環境・建築用語 暗記カード</h1>
+    
+    <div class="stats" id="stats">
+        <span>学習済み: <strong id="learned">0</strong></span> | 
+        <span>総カード数: <strong id="total">0</strong></span> | 
+        <span>正答率: <strong id="accuracy">0%</strong></span>
+    </div>
+    
+    <div class="controls">
+        <button class="primary-btn" onclick="nextCard()">次のカード →</button>
+        <button class="secondary-btn" onclick="previousCard()">← 前のカード</button>
+        <button class="secondary-btn" onclick="shuffleCards()">シャッフル 🔀</button>
+        <button class="success-btn" onclick="markAsLearned()">覚えた! ✓</button>
+        <button class="secondary-btn" onclick="resetProgress()">リセット</button>
+    </div>
+    
+    <div class="card-container" onclick="toggleAnswer()">
+        <div class="category" id="category"></div>
+        <div class="question" id="question"></div>
+        <div class="answer" id="answer"></div>
+        <div class="hint">クリックして答えを表示</div>
+    </div>
+    
+    <div class="progress" id="progress"></div>
 
-  <label>モード：</label>
-  <select id="mode">
-    <option value="flash">フラッシュカード</option>
-    <option value="quiz">４択クイズ</option>
-  </select>
+    <script>
+        const cards = [
+            {
+                category: "環境指標",
+                question: "エコロジカル・フットプリントとは？",
+                answer: `<div class="important">地球の環境容量を表す指標</div>
+                <ul>
+                    <li>人間活動が環境に与える負荷を資源の再生産および廃棄物の浄化に必要な面積として示した数値</li>
+                    <li><strong>アースオーバーシュートデー</strong>：日本人と同じ生活を世界中の人が続けた場合、1月から5月の間で地球資源一年分を使い切ってしまう</li>
+                    <li>半減以上の努力が必要</li>
+                </ul>`
+            },
+            {
+                category: "都市環境",
+                question: "ヒートアイランド現象とは？",
+                answer: `<div class="important">都市部の気温がその周辺の郊外部より高くなる現象</div>
+                <strong>主な原因：</strong>
+                <ul>
+                    <li><strong>土地利用の変化</strong>：アスファルトやコンクリートは水分が少なく大気の加熱源となる</li>
+                    <li><strong>建築物の影響</strong>：昼間の蓄熱が夜間に放熱、風の道がなくなる</li>
+                    <li><strong>人工排熱の影響</strong>：工場、建物空調、自動車からの排熱</li>
+                </ul>`
+            },
+            {
+                category: "都市環境",
+                question: "ヒートアイランド現象の対策は？",
+                answer: `<strong>土地利用関連：</strong>
+                <ul>
+                    <li>建築物や道路の緑化（都市計画レベルの大型計画が必要）</li>
+                </ul>
+                <strong>建築物関連：</strong>
+                <ul>
+                    <li>建物外部の保水化</li>
+                    <li>建物配置の改善による風の抜けを作る</li>
+                </ul>
+                <strong>人工排熱関連：</strong>
+                <ul>
+                    <li>建築物や空調・熱源設備の省エネ</li>
+                    <li>河川水・海水・地下水・地中熱の利用</li>
+                    <li>コジェネレーション等による排熱利用</li>
+                </ul>`
+            },
+            {
+                category: "国際機関",
+                question: "IPCC（気候変動に関する政府間パネル）とは？",
+                answer: `<div class="important">Intergovernmental Panel on Climate Change</div>
+                <ul>
+                    <li>世界中の科学者が発表した研究論文や観測データを基に、気候変動の現状、影響、対策などに関する科学的な評価を行い、報告書として取りまとめる</li>
+                </ul>
+                <strong>第6次報告書の要点：</strong>
+                <ul>
+                    <li>人為由来の気候変動が明確に起こっていると断言</li>
+                    <li>産業革命前と比べて1.1度地球の平均気温が上昇</li>
+                    <li>1.5度以内に収めないと不可逆的損失が多発</li>
+                </ul>`
+            },
+            {
+                category: "環境指標",
+                question: "地球温暖化係数（GWP）とは？",
+                answer: `<div class="important">Global Warming Potential</div>
+                <ul>
+                    <li>二酸化炭素を基準として、他の温室効果ガスがどれだけ地球温暖化に影響を与えるかを相対的に表す指標</li>
+                </ul>`
+            },
+            {
+                category: "環境データ",
+                question: "大気中のCO2濃度の現状は？",
+                answer: `<ul>
+                    <li>濃度は継続増加中で増加率も上昇中</li>
+                    <li>発生源の影響で相対的に北半球の中・高緯度帯で濃度が高く、南半球で低い</li>
+                </ul>`
+            },
+            {
+                category: "国際協定",
+                question: "パリ協定（COP21）の内容は？",
+                answer: `<div class="important">2015年12月採択、2016年11月発効</div>
+                <strong>主な内容：</strong>
+                <ul>
+                    <li>世界の平均気温上昇を産業革命前と比較して<strong>2℃未満</strong>に抑える（1.5℃未満に努める）</li>
+                    <li>排出量削減目標を5年ごとに見直し、提出する</li>
+                    <li>共通かつ柔軟な方法でその実施状況を報告し、レビューを受ける</li>
+                    <li>日本は2013年比で2030年までに<strong>26％減</strong></li>
+                </ul>`
+            },
+            {
+                category: "国際会議",
+                question: "COP（締約国会議）とは？",
+                answer: `<div class="important">Conference of the Parties</div>
+                <ul>
+                    <li>国連気候変動枠組条約の最高意思決定機関</li>
+                </ul>
+                <strong>日本の削減目標（2013年比で2030年まで）：</strong>
+                <ul>
+                    <li><strong>COP21（パリ協定）</strong>：26％削減（業務部門40％、家庭部門39％削減）</li>
+                    <li><strong>COP26（グラスゴー）</strong>：46％削減（業務部門51％、家庭部門66％削減）</li>
+                </ul>`
+            },
+            {
+                category: "投資・金融",
+                question: "ESGとは？",
+                answer: `<div class="important">環境・社会・ガバナンス</div>
+                <ul>
+                    <li>財務情報に加え、非財務情報（環境・社会・ガバナンス）を考慮に入れる投資のこと</li>
+                    <li><strong>投資家のメリット</strong>：座礁資産化のリスクを避け、長期的なリターンを確保</li>
+                    <li><strong>責任投資原則（PRI）</strong>：ESGの観点を考慮に入れることを推奨する世界共通の行動原則</li>
+                </ul>`
+            },
+            {
+                category: "建築技術",
+                question: "パッシブクーリング（PC）とパッシブヒーティング（PH）とは？",
+                answer: `<strong>パッシブクーリング（Passive Cooling）：</strong>
+                <ul>
+                    <li>熱を逃がす（通風）</li>
+                    <li>熱を遮る（遮蔽）</li>
+                    <li>冷熱を得る</li>
+                </ul>
+                <strong>パッシブヒーティング（Passive Heating）：</strong>
+                <ul>
+                    <li>熱を逃がさない（高断熱・高気密）</li>
+                    <li>熱を取り込む（ダイレクトヒートゲイン）</li>
+                    <li>温熱を得る</li>
+                </ul>`
+            },
+            {
+                category: "建築技術",
+                question: "伝統的な通風技術の例は？",
+                answer: `<strong>バッドギア（パキスタン）：</strong>
+                <ul>
+                    <li>自然換気用の煙突の窓</li>
+                </ul>
+                <strong>バッドギール（イラン）：</strong>
+                <ul>
+                    <li>採風塔（自然の風を利用して建物内部を冷却する）</li>
+                </ul>
+                <strong>コルビュジェによる都市計画（インド・チャンディーガル）：</strong>
+                <ul>
+                    <li>日射遮蔽や通風のスケッチが残されている</li>
+                </ul>`
+            },
+            {
+                category: "省エネ政策",
+                question: "省エネの「底上げ」と「天井上げ」とは？",
+                answer: `<strong>底上げ：</strong>
+                <ul>
+                    <li>最低限の要求</li>
+                    <li>建築物省エネ法による規制</li>
+                </ul>
+                <strong>天井上げ：</strong>
+                <ul>
+                    <li>トップランナー</li>
+                    <li>ZEB・ZEHの推進</li>
+                </ul>`
+            },
+            {
+                category: "省エネ指標",
+                question: "PAL（ペリメータ年間熱負荷係数）とは？",
+                answer: `<div class="important">Perimeter Annual Load [MJ/(m²年)]</div>
+                <ul>
+                    <li>PAL＝（ペリメータの年間熱負荷）÷（ペリメータの床面積）</li>
+                    <li>建築的な省エネ手法の推進（パッシブ）の指標</li>
+                </ul>`
+            },
+            {
+                category: "省エネ指標",
+                question: "CEC（エネルギー消費係数）とは？",
+                answer: `<div class="important">Co-efficient of Energy Consumption [-]</div>
+                <ul>
+                    <li>建物の設備が年間に消費するエネルギー量を、基準となるエネルギー消費量で割った値</li>
+                    <li>種類：CEC/AC（空調）、CEC/V（換気）、CEC/L（照明）、CEC/HW（給湯）、CEC/EV（昇降機）</li>
+                    <li>例：CEC/AC＝（年間一次エネルギー消費量）÷（年間仮想空調負荷）</li>
+                    <li>建築設備的な省エネ手法の推進（アクティブ）の指標</li>
+                </ul>`
+            },
+            {
+                category: "ZEB",
+                question: "各国のZEB定義の違いは？",
+                answer: `<strong>再生可能エネルギー：</strong>
+                <ul>
+                    <li><strong>日本</strong>：オンサイト（敷地内）のみ</li>
+                    <li><strong>他国</strong>：オフサイト（敷地外）も可の場合あり</li>
+                </ul>
+                <strong>OA・コンセント：</strong>
+                <ul>
+                    <li><strong>日本</strong>：考慮しない</li>
+                    <li><strong>アメリカ</strong>：考慮する</li>
+                </ul>`
+            },
+            {
+                category: "ZEB",
+                question: "ZEB事例の課題は？",
+                answer: `<ul>
+                    <li>ZEB事例のほとんどが建設業界の自社ビルであり、<strong>ビジネスになっていない</strong></li>
+                    <li>ZEBは本当にZEBか？設計性能のみで判断され、<strong>運用段階の実際の性能は要求されていない</strong></li>
+                    <li>ビルオーナーにとって省エネや脱炭素は<strong>まだ十分な価値を持っていない</strong></li>
+                    <li>テナントビルでは、光熱費を負担するのはオーナーではなく入居者（テナント）</li>
+                </ul>`
+            }
+        ];
 
-  <!-- Flashcard -->
-  <div id="flash" class="card">
-      <div id="question"></div>
-      <div id="answer" class="hidden"></div>
-      <button id="show" class="btn btn-ghost">答えを表示</button>
-      <button id="next" class="btn btn-main">次へ</button>
-  </div>
+        let currentCardIndex = 0;
+        let learnedCards = new Set();
+        let showingAnswer = false;
 
-  <!-- Quiz -->
-  <div id="quiz" class="quiz hidden">
-     <div id="qText"></div>
-     <div id="choices"></div>
-     <button id="nextQuiz" class="btn btn-main hidden">次へ</button>
-  </div>
-</div>
+        function init() {
+            loadProgress();
+            updateStats();
+            showCard();
+        }
 
-<script>
-// ---------- 暗記事項データ ----------
-const items = [
- {q:"エコロジカル・フットプリントとは？",
-  a:"人間活動が環境に与える負荷を『資源の再生産＋廃棄物浄化に必要な面積』で表した指標。地球の環境容量を可視化する。"},
- {q:"アースオーバーシュートデー（日本人水準）",
-  a:"世界中の人が日本人と同じ生活をすると、1月〜5月の間で地球資源 1 年分を使い切る。半減以上の努力が必要。"},
- {q:"ヒートアイランド現象とは？",
-  a:"都市部の気温が周辺郊外より高くなる現象。土地利用の変化・人工排熱・建築物形状などが要因。"},
- {q:"ヒートアイランド｜土地利用の対策", 
-  a:"アスファルト・コンクリート→緑化、水面・水田のように保水性の高い面へ。都市計画レベルの大規模緑化が有効。"},
- {q:"ヒートアイランド｜建築物の対策",
-  a:"外壁・屋上の保水化／蓄熱低減、建物配置で通風路を確保。"},
- {q:"ヒートアイランド｜人工排熱の対策",
-  a:"建物設備・空調の省エネ、高効率OA機器、コージェネや河川水等の排熱利用。"},
- {q:"IPCC の役割", 
-  a:"各国の研究論文・観測を総合し、気候変動の現状・影響・対策を科学的に評価し報告書を発行する。"},
- {q:"IPCC 第6次報告書のポイント",
-  a:"・人為的気候変動を断言\n・平均+1.1 °C 上昇（産業革命前比）\n・1.5 °C超で不可逆的損失が多発"},
- {q:"GWP（地球温暖化係数）とは？",
-  a:"CO₂=1 を基準に、他温室効果ガスが温暖化へ及ぼす影響を相対値で示す指標。"},
- {q:"大気中 CO₂ 濃度の特徴", 
-  a:"世界的に増加率は上昇。発生源が多い北半球中・高緯度で高く、南半球で低い。"},
- {q:"パリ協定の主目標", 
-  a:"世界平均気温上昇を産業革命前比 2 °C 未満、努力目標 1.5 °C 未満。各国は 5 年ごとに目標を更新。"},
- {q:"日本の2030年削減目標（パリ協定当初）", a:"2013年比 26 %（業務40 %、家庭39 % など）"},
- {q:"COP26 での日本目標（2021）", a:"2013年比 46 %（業務51 %、家庭66 %）"},
- {q:"ESG 投資とは？", 
-  a:"環境・社会・ガバナンスの非財務情報も考慮する投資アプローチ。化石燃料座礁資産リスクを回避し長期リターンを狙う。"},
- {q:"PRI（責任投資原則）", a:"投資家が意思決定で ESG を考慮することを推奨する国際的行動原則。"},
- {q:"パッシブクーリング（PC）の要素 3 つ", a:"① 熱を逃がす（通風）\n② 熱を遮る（遮蔽）\n③ 自然の冷熱を得る"},
- {q:"パッシブヒーティング（PH）の要素 3 つ", a:"① 断熱・気密で熱を逃がさない\n② 太陽熱などを取り込む（ダイレクトゲイン）\n③ 自然の温熱を得る"},
- {q:"バッドギア & バッドギール とは？", 
-  a:"自然換気設備。\nバッドギア＝パキスタンの通風用煙突窓\nバッドギール＝イランの採風塔"},
- {q:"省エネ『底上げ』と『天井上げ』", 
-  a:"底上げ=最低限義務（建築物省エネ法）／天井上げ=トップランナー（ZEB・ZEH）"},
- {q:"PAL の定義", 
-  a:"Perimeter Annual Load：ペリメータゾーン年間熱負荷 ÷ 床面積［MJ/(m²·年)］。建築(パッシブ)側指数。"},
- {q:"CEC の定義", 
-  a:"Co-efficient of Energy Consumption：年間一次エネ消費 ÷ 仮想空調負荷。設備(アクティブ)側指数。"},
- {q:"ZEB の国別定義差① 再エネ範囲", a:"オンサイト限定か？→ 日本はオンサイトのみ。欧州などはオフサイトも可。"},
- {q:"ZEB の国別定義差② OA・コンセント負荷", a:"日本は含めない。米国は含める。"},
- {q:"ZEB 普及上の課題（日本）", 
-  a:"自社ビル中心でビジネス化途上／設計性能のみで実績評価せず／テナントビルでは光熱費負担がオーナーでない等"}
-];
+        function showCard() {
+            const card = cards[currentCardIndex];
+            document.getElementById('category').textContent = card.category;
+            document.getElementById('question').textContent = card.question;
+            document.getElementById('answer').innerHTML = card.answer;
+            document.getElementById('answer').classList.remove('show');
+            document.getElementById('progress').textContent = `カード ${currentCardIndex + 1} / ${cards.length}`;
+            showingAnswer = false;
+            updateHint();
+        }
 
-// ---------- 共通ユーティリティ ----------
-const shuffle = arr => [...arr].sort(()=>Math.random()-0.5);
+        function toggleAnswer() {
+            const answerEl = document.getElementById('answer');
+            answerEl.classList.toggle('show');
+            showingAnswer = !showingAnswer;
+            updateHint();
+        }
 
-// ---------- フラッシュカード ----------
-let flashIdx = 0;
-const qEl = document.getElementById("question");
-const aEl = document.getElementById("answer");
-function renderFlash(){
-  const item = items[flashIdx];
-  qEl.textContent = item.q;
-  aEl.textContent = item.a;
-  aEl.classList.add("hidden");
-}
-document.getElementById("show").onclick = ()=>aEl.classList.toggle("hidden");
-document.getElementById("next").onclick = ()=>{
-  flashIdx = (flashIdx+1)%items.length;
-  renderFlash();
-};
+        function updateHint() {
+            const hint = document.querySelector('.hint');
+            hint.textContent = showingAnswer ? 'クリックして質問に戻る' : 'クリックして答えを表示';
+        }
 
-// ---------- ４択クイズ ----------
-let quizSet = shuffle(items);
-let quizIdx = 0;
-const qText = document.getElementById("qText");
-const choiceArea = document.getElementById("choices");
-const nextQuizBtn = document.getElementById("nextQuiz");
+        function nextCard() {
+            currentCardIndex = (currentCardIndex + 1) % cards.length;
+            showCard();
+        }
 
-function renderQuiz(){
-  nextQuizBtn.classList.add("hidden");
-  choiceArea.innerHTML = "";
-  const correct = quizSet[quizIdx];
-  qText.textContent = "Q. " + correct.q;
-  // 選択肢作成
-  const choices = shuffle([correct, ...shuffle(items).slice(0,3)]).map(it=>it.a);
-  choices.forEach(txt=>{
-    const div = document.createElement("div");
-    div.className="choice";
-    div.textContent = txt;
-    div.onclick = ()=>{
-      document.querySelectorAll(".choice").forEach(c=>c.onclick=null); // disable
-      if(txt===correct.a){
-        div.classList.add("correct");
-      }else{
-        div.classList.add("wrong");
-        // 正解もハイライト
-        [...choiceArea.children].find(c=>c.textContent===correct.a).classList.add("correct");
-      }
-      nextQuizBtn.classList.remove("hidden");
-    };
-    choiceArea.appendChild(div);
-  });
-}
-nextQuizBtn.onclick = ()=>{
-  quizIdx = (quizIdx+1)%quizSet.length;
-  if(quizIdx===0) quizSet = shuffle(items); // 1周したら再シャッフル
-  renderQuiz();
-};
+        function previousCard() {
+            currentCardIndex = (currentCardIndex - 1 + cards.length) % cards.length;
+            showCard();
+        }
 
-// ---------- モード切替 ----------
-const flashDiv = document.getElementById("flash");
-const quizDiv = document.getElementById("quiz");
-document.getElementById("mode").onchange = e=>{
-  const v = e.target.value;
-  if(v==="flash"){
-    flashDiv.classList.remove("hidden");
-    quizDiv.classList.add("hidden");
-    renderFlash();
-  }else{
-    flashDiv.classList.add("hidden");
-    quizDiv.classList.remove("hidden");
-    renderQuiz();
-  }
-};
-// 初期表示
-renderFlash();
-</script>
+        function shuffleCards() {
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+            }
+            currentCardIndex = 0;
+            showCard();
+        }
+
+        function markAsLearned() {
+            learnedCards.add(currentCardIndex);
+            saveProgress();
+            updateStats();
+            nextCard();
+        }
+
+        function updateStats() {
+            document.getElementById('learned').textContent = learnedCards.size;
+            document.getElementById('total').textContent = cards.length;
+            const accuracy = cards.length > 0 ? Math.round((learnedCards.size / cards.length) * 100) : 0;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+        }
+
+        function saveProgress() {
+            localStorage.setItem('envTermsProgress', JSON.stringify([...learnedCards]));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('envTermsProgress');
+            if (saved) {
+                learnedCards = new Set(JSON.parse(saved));
+            }
+        }
+
+        function resetProgress() {
+            if (confirm('学習進捗をリセットしますか？')) {
+                learnedCards.clear();
+                saveProgress();
+                updateStats();
+            }
+        }
+
+        // 初期化
+        init();
+    </script>
 </body>
 </html>
